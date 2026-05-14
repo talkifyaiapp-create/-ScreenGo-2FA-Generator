@@ -40,6 +40,20 @@
         <!-- ============================================== -->
         <div class="w-full bg-[#121212] border border-[#222222] rounded-2xl p-6 md:p-10 shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
             
+            <!-- Global Header -->
+            <div class="flex items-center justify-between mb-8 pb-8 border-b border-[#222222] w-full">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <div class="font-extrabold tracking-tight text-2xl text-white">
+                        screen<span class="text-[#FF6600]">Go</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-[#FF6600]/10 px-2 py-1 rounded-full border border-[#FF6600]/20">
+                    <span class="text-[9px] text-[#FF6600] uppercase tracking-wider font-bold">Encrypted</span>
+                    <div class="w-1.5 h-1.5 bg-[#FF6600] rounded-full animate-pulse shadow-[0_0_10px_#FF6600]"></div>
+                </div>
+            </div>
+
             <!-- Tab Headers -->
             <div class="flex flex-wrap gap-2 md:gap-4 mb-8 border-b border-[#222222] pb-6 justify-center md:justify-start">
                 <button id="tab-2fa" class="px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all bg-[#FF6600]/10 text-[#FF6600] border border-[#FF6600]/30 shadow-[0_0_15px_rgba(255,102,0,0.15)] flex items-center gap-2">
@@ -58,20 +72,6 @@
 
             <!-- TAB CONTENT: 2FA -->
             <div id="content-2fa" class="w-full max-w-[500px] mx-auto text-center block">
-                <!-- Header -->
-                <div class="flex items-center justify-between mb-10 w-full">
-                    <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
-                        <div class="font-extrabold tracking-tight text-2xl text-white">
-                            screen<span class="text-[#FF6600]">Go</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 bg-[#FF6600]/10 px-2 py-1 rounded-full border border-[#FF6600]/20">
-                        <span class="text-[9px] text-[#FF6600] uppercase tracking-wider font-bold">Encrypted</span>
-                        <div class="w-1.5 h-1.5 bg-[#FF6600] rounded-full animate-pulse shadow-[0_0_10px_#FF6600]"></div>
-                    </div>
-                </div>
-
                 <!-- Input Section -->
                 <div class="text-left mb-[30px]">
                     <label for="secret" class="text-[11px] uppercase tracking-[1.5px] text-[#888888] mb-2.5 block">
@@ -312,9 +312,9 @@
             emailsContainer.innerHTML = '';
             
             try {
-                // Using corsproxy to bypass CORS restrictions natively on the browser without Next.js server rewrites
+                // Using allorigins to bypass CORS
                 const targetUrl = `https://usmail.my.id/api/emails/${encodeURIComponent(query)}`;
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
                 
                 const response = await fetch(proxyUrl);
                 const data = await response.json();
@@ -384,7 +384,7 @@
             if (email.attachments && email.attachments.length > 0) {
                 modalAttachments.classList.remove('hidden');
                 attachmentsList.innerHTML = email.attachments.map(att => `
-                    <a href="https://corsproxy.io/?${encodeURIComponent('https://usmail.my.id' + att.path)}" download="${att.filename}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#222222] hover:bg-[#FF6600]/20 border border-[#222222] hover:border-[#FF6600] px-4 py-2 rounded-lg text-white hover:text-[#FF6600] text-sm transition-colors font-mono">
+                    <a href="https://api.allorigins.win/raw?url=${encodeURIComponent('https://usmail.my.id' + att.path)}" download="${att.filename}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#222222] hover:bg-[#FF6600]/20 border border-[#222222] hover:border-[#FF6600] px-4 py-2 rounded-lg text-white hover:text-[#FF6600] text-sm transition-colors font-mono">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                         ${att.filename}
                     </a>
