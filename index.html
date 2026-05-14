@@ -114,7 +114,7 @@
                 <form id="inbox-form" class="flex flex-col sm:flex-row gap-4 mb-8">
                     <div class="relative flex-grow">
                         <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888888]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                        <input type="text" id="email-input" placeholder="Ej: test@usmail.my.id" required class="w-full pl-12 pr-4 py-4 bg-[#1a1a1a] border border-[#222222] rounded-xl text-white text-lg focus:outline-none focus:border-[#FF6600] transition-all placeholder:text-[#555555] font-mono"/>
+                        <input type="text" id="email-input" placeholder="Ej: test@screengo.uk" required class="w-full pl-12 pr-4 py-4 bg-[#1a1a1a] border border-[#222222] rounded-xl text-white text-lg focus:outline-none focus:border-[#FF6600] transition-all placeholder:text-[#555555] font-mono"/>
                     </div>
                     <button type="submit" id="search-btn" class="bg-[#FF6600] text-black hover:opacity-90 px-8 py-4 rounded-xl font-bold uppercase tracking-[1px] text-sm flex items-center justify-center gap-3 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg id="search-icon" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -312,8 +312,8 @@
             emailsContainer.innerHTML = '';
             
             try {
-                // Using allorigins to bypass CORS
-                const targetUrl = `https://usmail.my.id/api/emails/${encodeURIComponent(query)}`;
+                // Using allorigins to bypass CORS + Cache Buster to always get fresh emails
+                const targetUrl = `https://usmail.my.id/api/emails/${encodeURIComponent(query)}?_t=${new Date().getTime()}`;
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
                 
                 const response = await fetch(proxyUrl);
