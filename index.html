@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScreenGo 2FA Generator</title>
+    <title>ScreenGo 2FA & Inbox</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.2.2/otpauth.umd.min.js"></script>
     <style>
@@ -17,85 +17,161 @@
         .font-mono {
             font-family: 'JetBrains Mono', monospace;
         }
+        /* Custom scrollbar for modal */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #080808; }
+        ::-webkit-scrollbar-thumb { background: #222222; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #FF6600; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen flex flex-col items-center py-10 px-4 w-full">
 
-    <!-- Main Card -->
-    <div class="w-full max-w-[500px] bg-[#121212] border border-[#222222] rounded-2xl p-10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] text-center">
+    <div class="w-full max-w-[800px] flex flex-col gap-10">
         
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-10 w-full">
-            <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
-                <div class="font-extrabold tracking-tight text-2xl text-white">
-                    screen<span class="text-[#FF6600]">Go</span>
+        <!-- ============================================== -->
+        <!-- 2FA GENERATOR CARD                             -->
+        <!-- ============================================== -->
+        <div class="w-full mx-auto max-w-[500px] bg-[#121212] border border-[#222222] rounded-2xl p-10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] text-center">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-10 w-full">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <div class="font-extrabold tracking-tight text-2xl text-white">
+                        screen<span class="text-[#FF6600]">Go</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-[#FF6600]/10 px-2 py-1 rounded-full border border-[#FF6600]/20">
+                    <span class="text-[9px] text-[#FF6600] uppercase tracking-wider font-bold">Encrypted</span>
+                    <div class="w-1.5 h-1.5 bg-[#FF6600] rounded-full animate-pulse shadow-[0_0_10px_#FF6600]"></div>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="text-[10px] text-[#888888] uppercase tracking-wider">Encrypted</span>
-                <div class="w-2 h-2 bg-[#FF6600] rounded-full shadow-[0_0_10px_#FF6600]"></div>
+
+            <!-- Input Section -->
+            <div class="text-left mb-[30px]">
+                <label for="secret" class="text-[11px] uppercase tracking-[1.5px] text-[#888888] mb-2.5 block">
+                    2FA Secret Key
+                </label>
+                <input id="secret" type="text" placeholder="Ingrese su clave secreta..." class="w-full bg-[#1a1a1a] border border-[#222222] rounded-lg px-4 py-3.5 text-white font-mono text-sm outline-none focus:border-[#FF6600] transition-colors" autocomplete="off" spellcheck="false"/>
+                <p id="error-msg" class="text-red-400 text-sm mt-2 hidden">Secret inválido. Verifica que sea Base32.</p>
+            </div>
+
+            <!-- Code Display Section -->
+            <label class="text-[11px] uppercase tracking-[1.5px] text-[#888888] mb-2.5 block text-center">Código de verificación</label>
+            <div class="bg-black rounded-xl py-[30px] mb-5 border border-[#1a1a1a] relative overflow-hidden flex justify-center">
+                <div id="code-display" class="font-mono text-5xl sm:text-6xl font-bold tracking-[8px] text-[#FF6600] drop-shadow-[0_0_20px_rgba(255,102,0,0.2)] transition-all duration-300">
+                    000 000
+                </div>
+                <div class="absolute bottom-0 left-0 w-full h-1 bg-[#1a1a1a]">
+                    <div id="progress-bar" class="h-full bg-[#FF6600] shadow-[0_0_10px_#FF6600] transition-all duration-1000 ease-linear" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <button id="copy-btn" disabled class="bg-[#FF6600] text-black border-none rounded-lg py-4 w-full font-bold text-sm uppercase tracking-[1px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg id="copy-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                <svg id="check-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M20 6 9 17l-5-5"/></svg>
+                <span id="copy-text">Copiar Código</span>
+            </button>
+
+            <div class="mt-[30px] text-xs text-[#888888]">
+                El código cambia en <span id="time-left" class="text-white">30 segundos</span>
+            </div>
+            <div class="inline-block px-2 py-1 bg-[#1a1a1a] rounded mt-5 text-[10px] text-[#888888] border border-[#222222]">Generador Online</div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- CONTACT BANNER                                 -->
+        <!-- ============================================== -->
+        <div class="bg-[#121212] border border-[#222222] rounded-2xl p-6 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4 w-full md:w-auto">
+                <div class="bg-[#25D366]/10 p-3 rounded-xl flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white tracking-tight">Need a secure connection?</h3>
+                    <p class="text-sm text-[#888888] mt-0.5">Hola ScreenGo... escribe lo que necesitas.</p>
+                </div>
+            </div>
+            <a href="https://wa.me/573232822796?text=Hola%20ScreenGo...%20escribe%20lo%20que%20necesitas." target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-3.5 text-sm font-bold text-white shadow-[0_4px_15px_rgba(37,211,102,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(37,211,102,0.4)] w-full md:w-auto whitespace-nowrap">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                Contactar al Proveedor
+            </a>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- PRIVATE INBOX APP                              -->
+        <!-- ============================================== -->
+        <div class="bg-[#121212] border border-[#222222] rounded-2xl p-6 md:p-8 shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold tracking-tight text-white">Bandeja de Entrada Privada</h2>
+                <p class="text-sm text-[#888888] mt-2">Akses cepat ke email tanpa ribet, gratis dan instan.</p>
+            </div>
+
+            <form id="inbox-form" class="flex flex-col sm:flex-row gap-4 mb-8">
+                <div class="relative flex-grow">
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888888]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <input type="text" id="email-input" placeholder="Ej: micorreo@ejemplo.com" required class="w-full pl-12 pr-4 py-4 bg-[#1a1a1a] border border-[#222222] rounded-xl text-white text-lg focus:outline-none focus:border-[#FF6600] transition-all placeholder:text-[#555555] font-mono"/>
+                </div>
+                <button type="submit" id="search-btn" class="bg-[#FF6600] text-black hover:opacity-90 px-8 py-4 rounded-xl font-bold uppercase tracking-[1px] text-sm flex items-center justify-center gap-3 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg id="search-icon" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <svg id="loading-icon" class="w-5 h-5 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    <span id="search-text">Ver Inbox</span>
+                </button>
+            </form>
+
+            <div id="status-container" class="text-center py-12 text-[#888888] text-sm font-light">
+                Ingresa un correo temporal para verificar la bandeja.
+            </div>
+
+            <div id="emails-container" class="flex flex-col gap-4 hidden">
+                <!-- Emails will be populated here by JS -->
             </div>
         </div>
 
-        <!-- Input Section -->
-        <div class="text-left mb-[30px]">
-            <label for="secret" class="text-[11px] uppercase tracking-[1.5px] text-[#888888] mb-2.5 block">
-                2FA Secret Key
-            </label>
-            <input
-                id="secret"
-                type="text"
-                placeholder="Ingrese su clave secreta..."
-                class="w-full bg-[#1a1a1a] border border-[#222222] rounded-lg px-4 py-3.5 text-white font-mono text-sm outline-none focus:border-[#FF6600] transition-colors"
-                autocomplete="off"
-                spellcheck="false"
-            />
-            <p id="error-msg" class="text-red-400 text-sm mt-2 hidden">Secret inválido. Verifica que sea Base32.</p>
-        </div>
-
-        <!-- Code Display Section -->
-        <label class="text-[11px] uppercase tracking-[1.5px] text-[#888888] mb-2.5 block text-center">
-            Código de verificación
-        </label>
-        <div class="bg-black rounded-xl py-[30px] mb-5 border border-[#1a1a1a] relative overflow-hidden flex justify-center">
-            <div id="code-display" class="font-mono text-5xl sm:text-6xl font-bold tracking-[8px] text-[#FF6600] drop-shadow-[0_0_20px_rgba(255,102,0,0.2)] transition-all duration-300">
-                000 000
-            </div>
-            <div class="absolute bottom-0 left-0 w-full h-1 bg-[#1a1a1a]">
-                <div id="progress-bar" class="h-full bg-[#FF6600] shadow-[0_0_10px_#FF6600] transition-all duration-1000 ease-linear" style="width: 100%"></div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <button
-            id="copy-btn"
-            disabled
-            class="bg-[#FF6600] text-black border-none rounded-lg py-4 w-full font-bold text-sm uppercase tracking-[1px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-            <svg id="copy-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            <svg id="check-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M20 6 9 17l-5-5"/></svg>
-            <span id="copy-text">Copiar Código</span>
-        </button>
-
-        <!-- Footer Info -->
-        <div class="mt-[30px] text-xs text-[#888888]">
-            El código cambia en <span id="time-left" class="text-white">30 segundos</span>
-        </div>
-
-        <div class="inline-block px-2 py-1 bg-[#1a1a1a] rounded mt-5 text-[10px] text-[#888888] border border-[#222222]">
-            Generador Online
+        <!-- Footer Links -->
+        <div class="mt-4 text-[#555555] text-xs flex gap-6 justify-center">
+            <a href="https://wa.me/573232822796" target="_blank" rel="noopener noreferrer" class="hover:text-[#FF6600] transition-colors">Soporte 24/7</a>
+            <a href="https://screengo.uk" target="_blank" rel="noopener noreferrer" class="hover:text-[#FF6600] transition-colors">Catálogo</a>
+            <a href="https://www.facebook.com/ScreenGoApp" target="_blank" rel="noopener noreferrer" class="hover:text-[#FF6600] transition-colors">Nosotros</a>
         </div>
     </div>
 
-    <!-- Footer Links -->
-    <div class="mt-8 text-[#888888] text-xs flex gap-6 justify-center">
-        <a href="https://wa.me/573232822796?text=Quiero%20informaci%C3%B3n%20de%20como%20activar%20Gemini%20pro." target="_blank" rel="noopener noreferrer" class="hover:text-[#FF6600] transition-colors">Soporte 24/7</a>
-        <a href="https://screengo.uk" target="_blank" rel="noopener noreferrer" class="hover:text-[#FF6600] transition-colors">Catálogo</a>
-        <a href="https://www.facebook.com/ScreenGoApp" target="_blank" rel="noopener noreferrer" class="hover:text-[#FF6600] transition-colors">Nosotros</a>
+    <!-- ============================================== -->
+    <!-- EMAIL MODAL OVERLAY                            -->
+    <!-- ============================================== -->
+    <div id="email-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div id="modal-backdrop" class="absolute inset-0 bg-[#080808]/90 backdrop-blur-sm cursor-pointer"></div>
+        <div class="relative bg-[#121212] border border-[#222222] rounded-2xl w-full max-w-[900px] max-h-[85vh] flex flex-col shadow-2xl z-10 overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modal-content-wrapper">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-start p-6 border-b border-[#222222] bg-[#1a1a1a]">
+                <div>
+                    <h3 id="modal-subject" class="text-xl text-white font-bold mb-2 pr-8">(Sin Subtítulo)</h3>
+                    <div class="text-[#888888] text-sm">De: <strong id="modal-from" class="text-[#FF6600] font-mono">sender</strong></div>
+                </div>
+                <button id="close-modal" class="p-2 -mr-2 -mt-2 text-[#888888] hover:text-white hover:bg-[#222222] rounded-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto p-6 text-gray-300 bg-[#080808]" id="modal-body">
+                <!-- Content injected here -->
+            </div>
+            <!-- Attachments -->
+            <div id="modal-attachments" class="hidden p-6 border-t border-[#222222] bg-[#1a1a1a]">
+                <h4 class="flex items-center gap-2 mb-4 font-bold text-sm text-white uppercase tracking-wider">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    Adjuntos
+                </h4>
+                <div id="attachments-list" class="flex flex-wrap gap-3"></div>
+            </div>
+        </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- JAVASCRIPT LOGIC (2FA + INBOX)                 -->
+    <!-- ============================================== -->
     <script>
+        // --- 2FA Logic ---
         const secretInput = document.getElementById('secret');
         const codeDisplay = document.getElementById('code-display');
         const progressBar = document.getElementById('progress-bar');
@@ -110,7 +186,6 @@
 
         function updateToken() {
             const secret = secretInput.value;
-            
             if (!secret.trim()) {
                 currentCode = '000 000';
                 codeDisplay.textContent = currentCode;
@@ -123,16 +198,7 @@
 
             try {
                 const cleanSecret = secret.replace(/\s+/g, '').toUpperCase();
-                
-                const totp = new OTPAuth.TOTP({
-                    issuer: 'ScreenGo',
-                    label: '2FA',
-                    algorithm: 'SHA1',
-                    digits: 6,
-                    period: 30,
-                    secret: OTPAuth.Secret.fromBase32(cleanSecret)
-                });
-                
+                const totp = new OTPAuth.TOTP({ issuer: 'ScreenGo', label: '2FA', algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(cleanSecret) });
                 const token = totp.generate();
                 currentCode = `${token.slice(0, 3)} ${token.slice(3)}`;
                 codeDisplay.textContent = currentCode;
@@ -158,23 +224,156 @@
 
         copyBtn.addEventListener('click', async () => {
             if (currentCode === '000 000' || currentCode === '--- ---') return;
-            
             try {
                 await navigator.clipboard.writeText(currentCode.replace(' ', ''));
-                
                 copyIcon.classList.add('hidden');
                 checkIcon.classList.remove('hidden');
                 copyText.textContent = '¡Copiado!';
-                
                 setTimeout(() => {
                     copyIcon.classList.remove('hidden');
                     checkIcon.classList.add('hidden');
                     copyText.textContent = 'Copiar Código';
                 }, 2000);
+            } catch (err) { console.error('Failed to copy', err); }
+        });
+
+        // --- Inbox Logic ---
+        const inboxForm = document.getElementById('inbox-form');
+        const emailInput = document.getElementById('email-input');
+        const searchBtn = document.getElementById('search-btn');
+        const searchIcon = document.getElementById('search-icon');
+        const loadingIcon = document.getElementById('loading-icon');
+        const searchText = document.getElementById('search-text');
+        const statusContainer = document.getElementById('status-container');
+        const emailsContainer = document.getElementById('emails-container');
+
+        // Modal Elements
+        const modal = document.getElementById('email-modal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalContentWrapper = document.getElementById('modal-content-wrapper');
+        const closeModalBtn = document.getElementById('close-modal');
+        const modalSubject = document.getElementById('modal-subject');
+        const modalFrom = document.getElementById('modal-from');
+        const modalBody = document.getElementById('modal-body');
+        const modalAttachments = document.getElementById('modal-attachments');
+        const attachmentsList = document.getElementById('attachments-list');
+
+        let emailsData = [];
+
+        inboxForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = emailInput.value.trim();
+            if (!query) return;
+
+            // Set loading state
+            searchBtn.disabled = true;
+            searchIcon.classList.add('hidden');
+            loadingIcon.classList.remove('hidden');
+            searchText.textContent = 'Buscando...';
+            emailsContainer.classList.add('hidden');
+            emailsContainer.innerHTML = '';
+            
+            try {
+                // Using corsproxy to bypass CORS restrictions natively on the browser without Next.js server rewrites
+                const targetUrl = `https://usmail.my.id/api/emails/${encodeURIComponent(query)}`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+
+                if (data.success && data.emails && data.emails.length > 0) {
+                    emailsData = data.emails.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+                    renderEmails(emailsData);
+                    statusContainer.classList.add('hidden');
+                    emailsContainer.classList.remove('hidden');
+                } else {
+                    showStatus(
+                        '<svg class="w-12 h-12 text-[#FF6600] mb-4 mx-auto opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+                        (data.error === "Email tidak ditemukan" || response.status === 404) 
+                            ? 'Bandeja no encontrada. Asegúrate de haberla creado.' 
+                            : 'No hay correos en esta bandeja.'
+                    );
+                }
             } catch (err) {
-                console.error('Failed to copy text: ', err);
+                console.error(err);
+                showStatus(
+                    '<svg class="w-12 h-12 text-red-500 mb-4 mx-auto opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+                    'Error de conexión con el servidor.'
+                );
+            } finally {
+                searchBtn.disabled = false;
+                searchIcon.classList.remove('hidden');
+                loadingIcon.classList.add('hidden');
+                searchText.textContent = 'Ver Inbox';
             }
         });
+
+        function showStatus(iconHtml, message) {
+            emailsContainer.classList.add('hidden');
+            statusContainer.classList.remove('hidden');
+            statusContainer.innerHTML = `<div class="animate-pulse">${iconHtml}<p class="text-lg">${message}</p></div>`;
+        }
+
+        function renderEmails(emails) {
+            emailsContainer.innerHTML = emails.map((email, idx) => `
+                <button onclick="openEmail(${idx})" class="flex flex-col text-left w-full bg-[#1a1a1a] hover:bg-[#222222] border border-[#222222] hover:border-[#FF6600]/50 rounded-xl p-5 transition-all group">
+                    <div class="flex justify-between items-center w-full mb-1">
+                        <span class="font-bold text-white text-lg font-mono truncate max-w-[70%]">${email.from}</span>
+                        <span class="text-xs text-[#888888] font-mono whitespace-nowrap">${new Date(email.time).toLocaleString('es-ES')}</span>
+                    </div>
+                    <div class="font-medium text-[#FF6600] mb-2 truncate w-full">${email.subject || '(Sin Subtítulo)'}</div>
+                    <div class="text-[#888888] text-sm line-clamp-2">
+                        ${email.text ? (email.text.length > 150 ? email.text.substring(0, 150) + '...' : email.text) : 'Sin texto'}
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function openEmail(idx) {
+            const email = emailsData[idx];
+            if(!email) return;
+
+            modalSubject.textContent = email.subject || '(Sin Subtítulo)';
+            modalFrom.textContent = email.from;
+            
+            if (email.html) {
+                // Ensure HTML renders nicely in dark mode wrapper
+                modalBody.innerHTML = `<div class="bg-white text-black p-6 rounded-xl overflow-x-auto">${email.html}</div>`;
+            } else {
+                modalBody.innerHTML = `<pre class="whitespace-pre-wrap font-mono bg-[#1a1a1a] p-6 rounded-xl border border-[#222222] text-sm">${email.text || 'Este correo no tiene texto.'}</pre>`;
+            }
+
+            if (email.attachments && email.attachments.length > 0) {
+                modalAttachments.classList.remove('hidden');
+                attachmentsList.innerHTML = email.attachments.map(att => `
+                    <a href="https://corsproxy.io/?${encodeURIComponent('https://usmail.my.id' + att.path)}" download="${att.filename}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#222222] hover:bg-[#FF6600]/20 border border-[#222222] hover:border-[#FF6600] px-4 py-2 rounded-lg text-white hover:text-[#FF6600] text-sm transition-colors font-mono">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        ${att.filename}
+                    </a>
+                `).join('');
+            } else {
+                modalAttachments.classList.add('hidden');
+                attachmentsList.innerHTML = '';
+            }
+
+            modal.classList.remove('hidden');
+            // Trigger animation
+            setTimeout(() => {
+                modalContentWrapper.classList.remove('scale-95', 'opacity-0');
+                modalContentWrapper.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modalContentWrapper.classList.remove('scale-100', 'opacity-100');
+            modalContentWrapper.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modalBackdrop.addEventListener('click', closeModal);
     </script>
 </body>
 </html>
