@@ -221,6 +221,32 @@
         const copyText = document.getElementById('copy-text');
 
         let currentCode = '000 000';
+        let timeOffset = 0; // Tracks difference between PC clock and true internet time
+
+        // Sync local clock with World Time to prevent strict 2FA failures (like ChatGPT) due to PC clock drift
+        async function syncTime() {
+            try {
+                // Try to get atomic time from reliable public API
+                let res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', { cache: 'no-store' });
+                let data = await res.json();
+                let serverTime = new Date(data.utc_datetime).getTime();
+                timeOffset = serverTime - Date.now();
+                console.log("Clock synced. Offset:", timeOffset, "ms");
+            } catch (err) {
+                console.warn('WorldTimeAPI failed, using fallback for time sync');
+                try {
+                    // Fallback to reading the Date header from a non-cached response
+                    let res = await fetch(window.location.href + '?_ts=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+                    let serverDate = res.headers.get('date');
+                    if(serverDate) {
+                        timeOffset = new Date(serverDate).getTime() - Date.now();
+                    }
+                } catch(e) {
+                    console.error('Time sync fallback failed');
+                }
+            }
+        }
+        syncTime();
 
         function updateToken() {
             const secret = secretInput.value;
@@ -237,13 +263,16 @@
             try {
                 const cleanSecret = secret.replace(/\s+/g, '').toUpperCase();
                 const totp = new OTPAuth.TOTP({ issuer: 'ScreenGo', label: '2FA', algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(cleanSecret) });
-                const token = totp.generate();
+                
+                // Use the synced time to generate the token
+                const syncedTime = Date.now() + timeOffset;
+                const token = totp.generate({ timestamp: syncedTime });
                 currentCode = `${token.slice(0, 3)} ${token.slice(3)}`;
                 codeDisplay.textContent = currentCode;
                 errorMsg.classList.add('hidden');
                 copyBtn.disabled = false;
                 
-                const epoch = Math.floor(Date.now() / 1000);
+                const epoch = Math.floor(syncedTime / 1000);
                 const remaining = 30 - (epoch % 30);
                 timeLeftDisplay.textContent = `${remaining} segundos`;
                 progressBar.style.width = `${(remaining / 30) * 100}%`;
